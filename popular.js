@@ -22,11 +22,11 @@ async function main() {
     fs.writeFileSync("popularTags.json", JSON.stringify(tags));
 }
 
-function loadPopularTags(topK=10){
+function loadPopularTags(topK=50){
     let json=fs.readFileSync("popularTags.json");
     let tags=JSON.parse(json);
     let ret=[];
-    for(let i=0; i<topK; i++){
+    for(let i=0; i<topK && i<tags.length; i++){
         ret.push(tags[i]);
     }
     return ret;
