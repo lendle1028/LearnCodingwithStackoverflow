@@ -25,3 +25,15 @@ for(let token in tokens){
         console.log('document #' + i + ' is ' + measure);
     });
 }
+
+
+
+var keyword_extractor = require("keyword-extractor");
+var extraction_result = keyword_extractor.extract(documents[3],{
+    language:"english",
+    remove_digits: true,
+    return_changed_case:true,
+    remove_duplicates: true
+
+});
+console.log(extraction_result);

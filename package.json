@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "keyword-extractor": "0.0.16",
     "natural": "^0.6.3",
     "request-promise": "^4.2.4"
   }
