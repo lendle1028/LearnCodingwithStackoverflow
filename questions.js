@@ -4,7 +4,7 @@ const fs=require('fs');
 let url = "https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&tagged=javascript&pagesize=100";
 
 async function main() {
-    let items=[];
+    let results=[];
     for (let page = 1; page <= 500; page++) {
         let ret = await request.get({
             uri: url+"&page="+page,
@@ -15,23 +15,40 @@ async function main() {
         });
 
         let response = JSON.parse(ret);
+        let items=response.items;
         console.log(items.length);
         for (let item of items) {
-            let date = new Date();
-            date.setTime(item.last_activity_date * 1000);
-            console.log(item.last_activity_date + ":" + date);
-            let tags = item.tags;
-            for (let tag of tags) {
-                if(synMap[tag]){
-                    tag=synMap[tag];
-                }
-                if (!tagMaps[tag]) {
-                    tagMaps[tag] = 0;
-                }
-                tagMaps[tag] = tagMaps[tag] + 1;
+            results.push(item);
+        }
+        if(!response.has_more){
+            break;
+        }
+    }
+    console.log(results.length);
+    fs.writeFileSync("javascript_questions.json", JSON.stringify(results));
+}
+
+function collectTags(){
+    let json=fs.readFileSync("javascript_questions.json");
+    let items=JSON.parse(json);
+    let tagMap={};
+    for(let item of items){
+        let tags=item.tags;
+        for(let tag of tags){
+            if(!tagMap[tag]){
+                tagMap[tag]=1;
+            }else{
+                tagMap[tag]=tagMap[tag]+1;
             }
         }
     }
-    console.log(tagMaps);
+    let filteredTagMap={};
+    for(let tag in tagMap){
+        if(tagMap[tag]>=50){
+            filteredTagMap[tag]=tagMap[tag];
+        }
+    }
+    console.log(filteredTagMap);
 }
-main();
+//main();
+collectTags();
