@@ -1,5 +1,10 @@
 const request = require('request-promise');
 const fs=require('fs');
+const keyword_extractor = require("keyword-extractor");
+const natural = require('natural');
+const TfIdf = natural.TfIdf;
+const tfidf = new TfIdf();
+const tokenizer = new natural.WordTokenizer();
 //let url="https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&fromdate=1514764800&todate=1546214400";
 let url = "https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&tagged=javascript&pagesize=100";
 
@@ -32,16 +37,55 @@ function collectTags(){
     let json=fs.readFileSync("javascript_questions.json");
     let items=JSON.parse(json);
     let tagMap={};
+    let tokens={};
     for(let item of items){
         let tags=item.tags;
+        /*for(let tag of tags){
+            if(!tagMap[tag]){
+                tagMap[tag]=1;
+            }else{
+                tagMap[tag]=tagMap[tag]+1;
+            }
+        }*/
+        let title=item.title;
+        tfidf.addDocument(title);
+        let _tokens=tokenizer.tokenize(title);
+        console.log(title);
+        for(let token of _tokens){
+            tokens[token]="";
+        }
+        /*tags = keyword_extractor.extract(title,{
+            language:"english",
+            remove_digits: true,
+            return_changed_case:true,
+            remove_duplicates: true
+        
+        });
+        console.log(tags);
         for(let tag of tags){
             if(!tagMap[tag]){
                 tagMap[tag]=1;
             }else{
                 tagMap[tag]=tagMap[tag]+1;
             }
-        }
+        }*/
     }
+
+    for(let token in tokens){
+        console.log("processing token: "+token);
+        tfidf.tfidfs(token, function(i, measure) {
+            if(measure>0){
+                let tag=token;
+                if(!tagMap[tag]){
+                    tagMap[tag]=1;
+                }else{
+                    tagMap[tag]=tagMap[tag]+1;
+                }
+            }
+            //console.log('document #' + i + ' is ' + measure);
+        });
+    }
+
     let filteredTagMap={};
     for(let tag in tagMap){
         if(tagMap[tag]>=50){
