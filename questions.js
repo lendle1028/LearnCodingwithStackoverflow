@@ -49,6 +49,7 @@ function collectTags() {
     let items = JSON.parse(json);
     let tagMap = {};
     let tokens = {};
+    let totalTokenCount=0;
     for (let item of items) {
         let tags = item.tags;
         /*for(let tag of tags){
@@ -63,6 +64,9 @@ function collectTags() {
         let _tokens = tokenizer.tokenize(title);
         console.log(title);
         for (let token of _tokens) {
+            if(!tokens[token]){
+                totalTokenCount++;
+            }
             tokens[token] = "";
         }
         /*tags = keyword_extractor.extract(title,{
@@ -82,8 +86,10 @@ function collectTags() {
         }*/
     }
 
+    let processedCount=0;
     for (let token in tokens) {
-        console.log("processing token: " + token);
+        processedCount++;
+        console.log("processing token: " + token+" "+processedCount+"/"+totalTokenCount);
         tfidf.tfidfs(token, function (i, measure) {
             if (measure > 0) {
                 let tag = token;
@@ -104,6 +110,7 @@ function collectTags() {
         }
     }
     console.log(filteredTagMap);
+    fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
 }
-main();
-//collectTags();
+//main();
+collectTags();
