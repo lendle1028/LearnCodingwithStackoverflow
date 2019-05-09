@@ -34,7 +34,7 @@ async function main() {
                 break;
             }
 
-            if(page % 2==0){
+            if (page % 2 == 0) {
                 console.log("wait for a while");
                 await sleep(30000);
             }
@@ -49,7 +49,7 @@ function collectTags() {
     let items = JSON.parse(json);
     let tagMap = {};
     let tokens = {};
-    let totalTokenCount=0;
+    let totalTokenCount = 0;
     for (let item of items) {
         let tags = item.tags;
         /*for(let tag of tags){
@@ -64,7 +64,7 @@ function collectTags() {
         let _tokens = tokenizer.tokenize(title);
         console.log(title);
         for (let token of _tokens) {
-            if(!tokens[token]){
+            if (!tokens[token]) {
                 totalTokenCount++;
             }
             tokens[token] = "";
@@ -86,10 +86,10 @@ function collectTags() {
         }*/
     }
 
-    let processedCount=0;
+    let processedCount = 0;
     for (let token in tokens) {
         processedCount++;
-        console.log("processing token: " + token+" "+processedCount+"/"+totalTokenCount);
+        console.log("processing token: " + token + " " + processedCount + "/" + totalTokenCount);
         tfidf.tfidfs(token, function (i, measure) {
             if (measure > 0) {
                 let tag = token;
@@ -112,5 +112,25 @@ function collectTags() {
     console.log(filteredTagMap);
     fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
 }
+
+function processTags() {
+    let tags = JSON.parse(fs.readFileSync("tags.json"));
+    let filteredTagMap = {};
+    for (let tag in tags) {
+        //let stemmedTag = natural.LancasterStemmer.stem(tag).toLowerCase();
+        let stemmedTag = tag.toLowerCase();
+        if (stemmedTag.length > 2 && stemmedTag.match(/[^$\d]/)) {
+            console.log(tag + ":" + stemmedTag);
+            if (!filteredTagMap[stemmedTag]) {
+                filteredTagMap[stemmedTag] = tags[tag];
+            } else {
+                filteredTagMap[stemmedTag] = filteredTagMap[stemmedTag] + tags[tag];
+            }
+        }
+    }
+    console.log(filteredTagMap);
+}
 //main();
-collectTags();
+//collectTags();
+processTags();
+//console.log(natural.LancasterStemmer.stem("array"));
