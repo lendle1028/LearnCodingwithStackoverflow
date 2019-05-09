@@ -135,36 +135,78 @@ function convert2CSV(){
     let questions = JSON.parse(fs.readFileSync("javascript_questions.json"));
     let tagsInfo=JSON.parse(fs.readFileSync("important_tokens.json"));
     let tags=tagsInfo.map(x=>x.tag);
+    console.log(tags);
     let fields=["index", "title", ...tags];
     let records=[];
     let index=0;
-    //fs.writeFileSync("questions.csv", fields.join(","));
+    let outputBuffer="";
+    //have to write out the file gradually to prevent heap overflow
+    fs.writeFileSync("questions.csv", fields.join(","));
     for(let question of questions){
         console.log(question.title);
-        let record={};
+        let record=[index, ""];
         let title=question.title;
         let tokens = tokenizer.tokenize(title);
         let stemmedTokens=tokens.map(x=>natural.PorterStemmer.stem(x).toLowerCase());
         let stemmedTokensMap={};
         for(let stemmedToken of stemmedTokens){
-            stemmedTokensMap[stemmedToken]="";
+            stemmedTokensMap[stemmedToken]="1";
         }
+        //console.log(tags.length);
+        //console.log(stemmedTokensMap.constructor);
+        let hitCount=0;
         for(let tag of tags){
-            if(stemmedTokensMap[tag]){
-                record[tag]=1;
+            //console.log("\t"+tag);
+            if(stemmedTokensMap[tag]=="1"){
+                hitCount++;
+                //console.log("\t\t"+tag);
+                record.push(1);
             }else{
-                record[tag]=0;
+                record.push(0);
             }
         }
-        record['title']=title;
-        record['index']=index;
+        console.log("\t"+hitCount);
+        if(outputBuffer.length>0){
+            outputBuffer+="\r\n";
+        }
+        outputBuffer+=record.join(",");
+        if(index%1000==0){
+            fs.appendFileSync("questions.csv", outputBuffer);
+            outputBuffer="";
+        }
         index++;
-        records.push(record);
+        // let record={};
+        // let title=question.title;
+        // let tokens = tokenizer.tokenize(title);
+        // let stemmedTokens=tokens.map(x=>natural.PorterStemmer.stem(x).toLowerCase());
+        // let stemmedTokensMap={};
+        // for(let stemmedToken of stemmedTokens){
+        //     stemmedTokensMap[stemmedToken]="";
+        // }
+        // for(let tag of tags){
+        //     if(stemmedTokensMap[tag]){
+        //         record[tag]=1;
+        //     }else{
+        //         record[tag]=0;
+        //     }
+        // }
+        // //record['title']=title;
+        // record['title']="";
+        // record['index']=index;
+        // index++;
+        // records.push(record);
+        // delete tokens;
+        // delete stemmedTokens;
+        // delete stemmedTokensMap;
     }
-    console.log("converting");
-    const json2csvParser = new Parser({ fields: fields});
-    const csv = json2csvParser.parse(records);
-    fs.writeFileSync("questions.csv", csv);
+    if(outputBuffer.length>0){
+        fs.appendFileSync("questions.csv", outputBuffer);
+        outputBuffer="";
+    }
+    // console.log("converting");
+    // const json2csvParser = new Parser({ fields: fields});
+    // const csv = json2csvParser.parse(records);
+    // fs.writeFileSync("questions.csv", csv);
 }
 //main();
 //collectTags();
