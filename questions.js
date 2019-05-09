@@ -10,6 +10,9 @@ let url = "https://api.stackexchange.com/2.2/questions?key=TsELULFShNfv3LtUcuTk4
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+    /*return new Promise(function(r){
+        setTimeout(r, ms);
+    });*/
 }
 
 async function main() {
@@ -52,13 +55,7 @@ function collectTags() {
     let totalTokenCount=0;
     for (let item of items) {
         let tags = item.tags;
-        /*for(let tag of tags){
-            if(!tagMap[tag]){
-                tagMap[tag]=1;
-            }else{
-                tagMap[tag]=tagMap[tag]+1;
-            }
-        }*/
+        
         let title = item.title;
         tfidf.addDocument(title);
         let _tokens = tokenizer.tokenize(title);
@@ -69,21 +66,6 @@ function collectTags() {
             }
             tokens[token] = "";
         }
-        /*tags = keyword_extractor.extract(title,{
-            language:"english",
-            remove_digits: true,
-            return_changed_case:true,
-            remove_duplicates: true
-        
-        });
-        console.log(tags);
-        for(let tag of tags){
-            if(!tagMap[tag]){
-                tagMap[tag]=1;
-            }else{
-                tagMap[tag]=tagMap[tag]+1;
-            }
-        }*/
     }
 
     let processedCount=0;
@@ -104,6 +86,7 @@ function collectTags() {
     }
 
     let filteredTagMap = {};
+    
     for (let tag in tagMap) {
         if (tagMap[tag] >= 50) {
             filteredTagMap[tag] = tagMap[tag];
