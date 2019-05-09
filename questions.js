@@ -5,6 +5,7 @@ const natural = require('natural');
 const TfIdf = natural.TfIdf;
 const tfidf = new TfIdf();
 const tokenizer = new natural.WordTokenizer();
+const { Parser } = require('json2csv');
 //let url="https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&fromdate=1514764800&todate=1546214400";
 let url = "https://api.stackexchange.com/2.2/questions?key=TsELULFShNfv3LtUcuTk4Q((&order=desc&sort=votes&min=10&site=stackoverflow&tagged=javascript&pagesize=100";
 
@@ -99,11 +100,13 @@ function collectTags() {
 function processTags() {
     let tags = JSON.parse(fs.readFileSync("tags.json"));
     let filteredTagMap = {};
+    let mapping={};
     for (let tag in tags) {
-        //let stemmedTag = natural.LancasterStemmer.stem(tag).toLowerCase();
-        let stemmedTag = tag.toLowerCase();
+        let stemmedTag = natural.PorterStemmer.stem(tag).toLowerCase();
+        mapping[stemmedTag]=tag;
+        //let stemmedTag = tag.toLowerCase();
         if (stemmedTag.length > 2 && stemmedTag.match(/[^$\d]/)) {
-            console.log(tag + ":" + stemmedTag);
+            //console.log(tag + ":" + stemmedTag);
             if (!filteredTagMap[stemmedTag]) {
                 filteredTagMap[stemmedTag] = tags[tag];
             } else {
@@ -111,9 +114,60 @@ function processTags() {
             }
         }
     }
-    console.log(filteredTagMap);
+    //console.log(filteredTagMap);
+    let sortedTagArray=[];
+    for(let tag in filteredTagMap){
+        sortedTagArray.push({
+            tag: tag,
+            count: filteredTagMap[tag],
+            original: mapping[tag]
+        });
+    }
+    sortedTagArray.sort(function(o1, o2){
+        return (o1.count-o2.count)*-1;
+    });
+    //console.log(sortedTagArray);
+    //console.log(sortedTagArray.length);
+    fs.writeFileSync("important_tokens.json", JSON.stringify(sortedTagArray));
+}
+
+function convert2CSV(){
+    let questions = JSON.parse(fs.readFileSync("javascript_questions.json"));
+    let tagsInfo=JSON.parse(fs.readFileSync("important_tokens.json"));
+    let tags=tagsInfo.map(x=>x.tag);
+    let fields=["index", "title", ...tags];
+    let records=[];
+    let index=0;
+    //fs.writeFileSync("questions.csv", fields.join(","));
+    for(let question of questions){
+        console.log(question.title);
+        let record={};
+        let title=question.title;
+        let tokens = tokenizer.tokenize(title);
+        let stemmedTokens=tokens.map(x=>natural.PorterStemmer.stem(x).toLowerCase());
+        let stemmedTokensMap={};
+        for(let stemmedToken of stemmedTokens){
+            stemmedTokensMap[stemmedToken]="";
+        }
+        for(let tag of tags){
+            if(stemmedTokensMap[tag]){
+                record[tag]=1;
+            }else{
+                record[tag]=0;
+            }
+        }
+        record['title']=title;
+        record['index']=index;
+        index++;
+        records.push(record);
+    }
+    console.log("converting");
+    const json2csvParser = new Parser({ fields: fields});
+    const csv = json2csvParser.parse(records);
+    fs.writeFileSync("questions.csv", csv);
 }
 //main();
 //collectTags();
-processTags();
-//console.log(natural.LancasterStemmer.stem("array"));
+//processTags();
+//console.log(natural.PorterStemmer.stem("javascript"));
+convert2CSV();
