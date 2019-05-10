@@ -141,9 +141,9 @@ function convert2CSV(){
     let index=0;
     let outputBuffer="";
     //have to write out the file gradually to prevent heap overflow
-    fs.writeFileSync("questions.csv", fields.join(","));
+    fs.writeFileSync("questions.csv", fields.join(",")+"\r\n");
     for(let question of questions){
-        console.log(question.title);
+        console.log(question.title+":"+index);
         let record=[index, ""];
         let title=question.title;
         let tokens = tokenizer.tokenize(title);
@@ -166,7 +166,7 @@ function convert2CSV(){
             }
         }
         console.log("\t"+hitCount);
-        if(outputBuffer.length>0){
+        if(outputBuffer.length>0 || index%1000==1){
             outputBuffer+="\r\n";
         }
         outputBuffer+=record.join(",");
