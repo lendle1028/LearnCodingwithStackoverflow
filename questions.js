@@ -7,6 +7,7 @@ const tfidf = new TfIdf();
 const tokenizer = new natural.WordTokenizer();
 const { Parser } = require('json2csv');
 const mathjs = require('mathjs');
+const csvtojson = require('csvtojson');
 //let url="https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&fromdate=1514764800&todate=1546214400";
 let url = "https://api.stackexchange.com/2.2/questions?key=TsELULFShNfv3LtUcuTk4Q((&order=desc&sort=votes&min=10&site=stackoverflow&tagged=javascript&pagesize=100";
 
@@ -233,9 +234,28 @@ function convert2CSV() {
 
 let json = fs.readFileSync("javascript_questions.json");
 let items = JSON.parse(json);
-for(let i of [933,3368,3458,3612,4075,4911,7063,9706,14841,14924,18818,20058,20390,23621,24379,25596,26570,29627,32209,33106,33153,37401,39144,43595]){
-    console.log(items[i].title);
-    for(let tag of items[i].tags){
-        console.log("\t"+tag);
+csvtojson().fromFile("javascript_question_cluster.csv").then((json)=>{
+    let array=[];
+    let cluster=294;
+    for(let i=0; i<items.length; i++){
+        //console.log(json[i].cluster);
+        if(parseInt(json[i].cluster)==cluster){
+            array.push(i);
+        }
     }
-}
+    for(let i of array){
+        console.log(items[i].title);
+        for(let key in json[i]){
+            if(key!="index" && key!="cluster"){
+                if(json[i][key]=="1"){
+                    console.log("\t"+key);
+                }
+            }
+        }
+        /*console.log(items[i].title);
+        for(let tag of items[i].tags){
+            console.log("\t"+tag);
+        }*/
+    }
+    //console.log(json);
+});
