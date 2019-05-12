@@ -1,13 +1,12 @@
 const request = require('request-promise');
 const fs = require('fs');
-const keyword_extractor = require("keyword-extractor");
 const natural = require('natural');
 const TfIdf = natural.TfIdf;
 const tfidf = new TfIdf();
 const tokenizer = new natural.WordTokenizer();
 const { Parser } = require('json2csv');
 const mathjs = require('mathjs');
-const csvtojson = require('csvtojson');
+
 //let url="https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&fromdate=1514764800&todate=1546214400";
 let url = "https://api.stackexchange.com/2.2/questions?key=TsELULFShNfv3LtUcuTk4Q((&order=desc&sort=votes&min=10&site=stackoverflow&tagged=javascript&pagesize=100";
 
@@ -232,30 +231,3 @@ function convert2CSV() {
 //console.log(natural.PorterStemmer.stem("javascript"));
 //convert2CSV();
 
-let json = fs.readFileSync("javascript_questions.json");
-let items = JSON.parse(json);
-csvtojson().fromFile("javascript_question_cluster.csv").then((json)=>{
-    let array=[];
-    let cluster=294;
-    for(let i=0; i<items.length; i++){
-        //console.log(json[i].cluster);
-        if(parseInt(json[i].cluster)==cluster){
-            array.push(i);
-        }
-    }
-    for(let i of array){
-        console.log(items[i].title);
-        for(let key in json[i]){
-            if(key!="index" && key!="cluster"){
-                if(json[i][key]=="1"){
-                    console.log("\t"+key);
-                }
-            }
-        }
-        /*console.log(items[i].title);
-        for(let tag of items[i].tags){
-            console.log("\t"+tag);
-        }*/
-    }
-    //console.log(json);
-});
