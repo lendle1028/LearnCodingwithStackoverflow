@@ -45,17 +45,24 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
         }*/
     }
     for (let token in allTokens) {
-        tfidf.tfidfs(token, function (i, measure) {
-            if (measure > 0) {
-                documents[array[i]].tags.push({
-                    name: token,
-                    measure: measure
-                });
-            }
-            /*let score=allTokens[token];
-            if(measure>score){
-                allTokens[token]=measure;
-            }*/
+        if (token.length > 2 && token.match(/[^$\d]/)) {
+            tfidf.tfidfs(token, function (i, measure) {
+                if (measure > 0) {
+                    documents[array[i]].tags.push({
+                        name: token,
+                        measure: measure
+                    });
+                }
+                /*let score=allTokens[token];
+                if(measure>score){
+                    allTokens[token]=measure;
+                }*/
+            });
+        }
+    }
+    for(let i in documents){
+        documents[i].tags.sort(function(o1, o2){
+            return o1.measure-o2.measure;
         });
     }
     fs.writeFileSync("test.json", JSON.stringify(documents));
