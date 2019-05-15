@@ -19,7 +19,7 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
         for (let i = 0; i < json.length; i++) {
             //console.log(json[i].cluster);
             if (parseInt(json[i].cluster) == cluster) {
-                array.push(json[i].index);
+                array.push(json[i]);
             }
         }
         console.log(array.length);
@@ -27,14 +27,14 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
         let allTokens = {};
         let documents = {};
         for (let i of array) {
-            let title = items[i].title;
+            let title = i.title;
             let tokens = tokenizer.tokenize(title);
             for (let token of tokens) {
                 allTokens[token] = 0;
             }
             tfidf.addDocument(title);
-            documents[json[i].index] = {
-                index: json[i].index,
+            documents[i.index] = {
+                index: i.index,
                 title: title,
                 tags: []
             };
@@ -43,7 +43,7 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
             if (token.length > 2 && token.match(/[^$\d]/)) {
                 tfidf.tfidfs(token, function (i, measure) {
                     if (measure > 0) {
-                        documents[array[i]].tags.push({
+                        documents[array[i].index].tags.push({
                             name: token,
                             measure: measure
                         });
