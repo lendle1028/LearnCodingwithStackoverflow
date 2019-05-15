@@ -140,6 +140,9 @@ function processTags() {
     let mean = mathjs.mean(counts);
     let filteredTokens = [];
     for (let tag of sortedTagArray) {
+        if(filteredTokens.length>=50){
+            break;
+        }
         if (!isNaN(tag.count) && tag.count >= mean) {
             filteredTokens.push(tag);
         }
@@ -229,5 +232,5 @@ function convert2CSV() {
 //collectTags();
 //processTags();
 //console.log(natural.PorterStemmer.stem("javascript"));
-//convert2CSV();
+convert2CSV();
 

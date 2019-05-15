@@ -8,14 +8,18 @@ let json = fs.readFileSync("javascript_questions.json");
 let items = JSON.parse(json);
 let results=[];
 csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
-    for (let cluster = 1; cluster <= 300; cluster++) {
+    //add the title property back
+    for (let i = 0; i < json.length; i++) {
+        json[i]["title"]=items[json[i].index].title;
+    }
+    for (let cluster = 1; cluster <= 40; cluster++) {
         console.log("processing cluster: "+cluster);
         let tfidf = new natural.TfIdf();
         let array = [];
-        for (let i = 0; i < items.length; i++) {
+        for (let i = 0; i < json.length; i++) {
             //console.log(json[i].cluster);
             if (parseInt(json[i].cluster) == cluster) {
-                array.push(i);
+                array.push(json[i].index);
             }
         }
         console.log(array.length);
@@ -23,29 +27,17 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
         let allTokens = {};
         let documents = {};
         for (let i of array) {
-            //console.log(items[i].title);
             let title = items[i].title;
             let tokens = tokenizer.tokenize(title);
             for (let token of tokens) {
                 allTokens[token] = 0;
             }
             tfidf.addDocument(title);
-            documents[i] = {
-                index: i,
+            documents[json[i].index] = {
+                index: json[i].index,
                 title: title,
                 tags: []
             };
-            /*for(let key in json[i]){
-                if(key!="index" && key!="cluster"){
-                    if(json[i][key]=="1"){
-                        //console.log("\t"+key);
-                    }
-                }
-            }*/
-            /*console.log(items[i].title);
-            for(let tag of items[i].tags){
-                console.log("\t"+tag);
-            }*/
         }
         for (let token in allTokens) {
             if (token.length > 2 && token.match(/[^$\d]/)) {
@@ -83,12 +75,12 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
             let sd = mathjs.std(array);
             let count=0;
             for (let tag of documents[i].tags) {
-                if (tag.measure <= mean - 0.5*sd) {
+                if (tag.measure <= mean - sd) {
                     generalTags[tag.name.toLowerCase()] = i;
                 }
                 count++;
-                if(count>=4){
-                    //limit to 5 tags for each document
+                if(count>=3){
+                    //limit to 3 tags for each document
                     break;
                 }
             }
