@@ -12,7 +12,7 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
     for (let i = 0; i < json.length; i++) {
         json[i]["title"]=items[json[i].index].title;
     }
-    for (let cluster = 1; cluster <= 40; cluster++) {
+    for (let cluster = 1; cluster <= 100; cluster++) {
         console.log("processing cluster: "+cluster);
         let tfidf = new natural.TfIdf();
         let array = [];

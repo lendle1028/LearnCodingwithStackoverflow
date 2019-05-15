@@ -140,7 +140,7 @@ function processTags() {
     let mean = mathjs.mean(counts);
     let filteredTokens = [];
     for (let tag of sortedTagArray) {
-        if(filteredTokens.length>=50){
+        if(filteredTokens.length>=100){
             break;
         }
         if (!isNaN(tag.count) && tag.count >= mean) {
