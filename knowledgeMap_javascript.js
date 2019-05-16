@@ -65,7 +65,9 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
         for (let i in documents) {
             let array = [];
             for (let tag of documents[i].tags) {
-                array.push(tag.measure);
+                if(tag.name.toLowerCase()!="javascript"){
+                    array.push(tag.measure);
+                }
             }
             if(array.length==0){
                 //skip document with no usable tags
@@ -75,11 +77,14 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
             let sd = mathjs.std(array);
             let count=0;
             for (let tag of documents[i].tags) {
+                if(tag.name.toLowerCase()=="javascript"){
+                    continue;
+                }
                 if (tag.measure <= mean - sd) {
                     generalTags[tag.name.toLowerCase()] = i;
                 }
                 count++;
-                if(count>=3){
+                if(count>=2){
                     //limit to 3 tags for each document
                     break;
                 }
