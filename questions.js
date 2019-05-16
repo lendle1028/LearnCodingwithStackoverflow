@@ -4,7 +4,6 @@ const natural = require('natural');
 const TfIdf = natural.TfIdf;
 const tfidf = new TfIdf();
 const tokenizer = new natural.WordTokenizer();
-const { Parser } = require('json2csv');
 const mathjs = require('mathjs');
 
 //let url="https://api.stackexchange.com/2.2/questions?order=desc&sort=votes&min=50&site=stackoverflow&fromdate=1514764800&todate=1546214400";
@@ -157,11 +156,44 @@ function convert2CSV() {
     let tags = tagsInfo.map(x => x.tag);
     console.log(tags);
     let fields = ["index", ...tags];
-    let records = [];
     let index = 0;
     let outputBuffer = "";
+    //cooccurrence map
+    //tag=>[cooccur_tag:count]
+    let cooccur={};
     //have to write out the file gradually to prevent heap overflow
     fs.writeFileSync("questions.csv", fields.join(",") + "\r\n");
+    for (let question of questions) {
+        let title = question.title;
+        let tokens = tokenizer.tokenize(title);
+        let stemmedTokens = tokens.map(x => natural.PorterStemmer.stem(x).toLowerCase());
+        let stemmedTokensMap = {};
+        for (let stemmedToken of stemmedTokens) {
+            stemmedTokensMap[stemmedToken] = "1";
+        }
+        //console.log(tags.length);
+        //console.log(stemmedTokensMap.constructor);
+        let validTags=[];
+        for (let tag of tags) {
+            if (stemmedTokensMap[tag] == "1") {
+                validTags.push(tag);
+            } 
+        }
+        for(let validTag of validTags){
+            let cooccurMap=cooccur[validTag];
+            if(!cooccurMap){
+                cooccurMap={};
+                cooccur[validTag]=cooccurMap;
+            }
+            for(let validTag2 of validTags){
+                if(!cooccurMap[validTag2]){
+                    cooccurMap[validTag2]=1;
+                }else{
+                    cooccurMap[validTag2]=cooccurMap[validTag2]+1;
+                }
+            }
+        }
+    }
     for (let question of questions) {
         console.log(question.title + ":" + index);
         let record = [index];
@@ -172,20 +204,25 @@ function convert2CSV() {
         for (let stemmedToken of stemmedTokens) {
             stemmedTokensMap[stemmedToken] = "1";
         }
-        //console.log(tags.length);
-        //console.log(stemmedTokensMap.constructor);
-        let hitCount = 0;
-        for (let tag of tags) {
-            //console.log("\t"+tag);
-            if (stemmedTokensMap[tag] == "1") {
-                hitCount++;
-                //console.log("\t\t"+tag);
-                record.push(1);
-            } else {
-                record.push(0);
+        for (let stemmedToken of stemmedTokens) {
+            if(cooccur[stemmedToken]){
+                for(let cooccurTag in cooccur[stemmedToken]){
+                    stemmedTokensMap[cooccurTag]=cooccur[stemmedToken][cooccurTag]/cooccur[stemmedToken][stemmedToken];
+                }
             }
         }
-        console.log("\t" + hitCount);
+        for (let tag of tags) {
+            if (stemmedTokensMap[tag] == "1") {
+                record.push(1);
+            } else {
+                if(!stemmedTokensMap[tag]){
+                    record.push(0);
+                }else{
+                    record.push(stemmedTokensMap[tag]);
+                }
+            }
+        }
+
         if (outputBuffer.length > 0 || index % 1000 == 1) {
             outputBuffer += "\r\n";
         }
@@ -227,6 +264,7 @@ function convert2CSV() {
     // const json2csvParser = new Parser({ fields: fields});
     // const csv = json2csvParser.parse(records);
     // fs.writeFileSync("questions.csv", csv);
+    console.log(cooccur);
 }
 //main();
 //collectTags();
