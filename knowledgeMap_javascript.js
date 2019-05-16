@@ -63,6 +63,9 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
 
         let generalTags = {};
         for (let i in documents) {
+            if(cluster==60){
+                console.log(documents[i].title);
+            }
             let array = [];
             for (let tag of documents[i].tags) {
                 if(tag.name.toLowerCase()!="javascript"){
@@ -90,7 +93,7 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
                 }
             }
         }
-        console.log(generalTags);
+        //console.log(generalTags);
         results.push({
             cluster: cluster,
             tags: generalTags
