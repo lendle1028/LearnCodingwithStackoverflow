@@ -12,7 +12,7 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
     for (let i = 0; i < json.length; i++) {
         json[i]["title"]=items[json[i].index].title;
     }
-    for (let cluster = 1; cluster <= 60; cluster++) {
+    for (let cluster = 1; cluster <= 100; cluster++) {
         console.log("processing cluster: "+cluster);
         let tfidf = new natural.TfIdf();
         let array = [];
@@ -63,9 +63,6 @@ csvtojson().fromFile("javascript_question_cluster.csv").then((json) => {
 
         let generalTags = {};
         for (let i in documents) {
-            if(cluster==60){
-                console.log(documents[i].title);
-            }
             let array = [];
             for (let tag of documents[i].tags) {
                 if(tag.name.toLowerCase()!="javascript"){

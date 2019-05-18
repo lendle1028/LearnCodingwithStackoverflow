@@ -139,7 +139,7 @@ function processTags() {
     let mean = mathjs.mean(counts);
     let filteredTokens = [];
     for (let tag of sortedTagArray) {
-        if(filteredTokens.length>=100){
+        if (filteredTokens.length >= 100) {
             break;
         }
         if (!isNaN(tag.count) && tag.count >= mean) {
@@ -148,6 +148,69 @@ function processTags() {
     }
     console.log(filteredTokens.length);
     fs.writeFileSync("filteredTokens.json", JSON.stringify(filteredTokens));
+}
+
+async function constructCooccurMap() {
+    let cooccur = {};
+    let questions = JSON.parse(fs.readFileSync("javascript_questions.json"));
+    let tagsInfo = JSON.parse(fs.readFileSync("filteredTokens.json"));
+    let tags = tagsInfo.map(x => x.original);
+    let url="https://api.stackexchange.com/2.2/tags?key=TsELULFShNfv3LtUcuTk4Q((&site=stackoverflow&pagesize=100&tags=javascript";
+    for(let tag of tags){
+        tag=tag.toLowerCase();
+        if(tag!="javascript"){
+            console.log("processing: "+tag);
+            let _url=url+";"+tag;
+            let ret = await request.get({
+                uri: _url,
+                headers: {
+                    'Accept-Encoding': 'gzip'
+                },
+                gzip: true
+            });
+            let items=JSON.parse(ret).items;
+            let innerMap={};
+            tag=natural.PorterStemmer.stem(tag).toLowerCase();
+            for(let item of items){
+                if(item.name=="javascript"){
+                    continue;
+                }
+                innerMap[natural.PorterStemmer.stem(item.name).toLowerCase()]=item.count;
+            }
+            cooccur[tag]=innerMap;
+            await sleep(10000);
+        }
+    }
+    // for (let question of questions) {
+    //     let title = question.title;
+    //     let tokens = tokenizer.tokenize(title);
+    //     let stemmedTokens = tokens.map(x => natural.PorterStemmer.stem(x).toLowerCase());
+    //     let stemmedTokensMap = {};
+    //     for (let stemmedToken of stemmedTokens) {
+    //         stemmedTokensMap[stemmedToken] = "1";
+    //     }
+    //     let validTags = [];
+    //     for (let tag of tags) {
+    //         if (stemmedTokensMap[tag] == "1") {
+    //             validTags.push(tag);
+    //         }
+    //     }
+    //     for (let validTag of validTags) {
+    //         let cooccurMap = cooccur[validTag];
+    //         if (!cooccurMap) {
+    //             cooccurMap = {};
+    //             cooccur[validTag] = cooccurMap;
+    //         }
+    //         for (let validTag2 of validTags) {
+    //             if (!cooccurMap[validTag2]) {
+    //                 cooccurMap[validTag2] = 1;
+    //             } else {
+    //                 cooccurMap[validTag2] = cooccurMap[validTag2] + 1;
+    //             }
+    //         }
+    //     }
+    // }
+    fs.writeFileSync("cooccur_javascript.json", JSON.stringify(cooccur));
 }
 
 function convert2CSV() {
@@ -160,40 +223,10 @@ function convert2CSV() {
     let outputBuffer = "";
     //cooccurrence map
     //tag=>[cooccur_tag:count]
-    let cooccur={};
+    let cooccur = JSON.parse(fs.readFileSync("cooccur_javascript.json"));;
     //have to write out the file gradually to prevent heap overflow
     fs.writeFileSync("questions.csv", fields.join(",") + "\r\n");
-    for (let question of questions) {
-        let title = question.title;
-        let tokens = tokenizer.tokenize(title);
-        let stemmedTokens = tokens.map(x => natural.PorterStemmer.stem(x).toLowerCase());
-        let stemmedTokensMap = {};
-        for (let stemmedToken of stemmedTokens) {
-            stemmedTokensMap[stemmedToken] = "1";
-        }
-        //console.log(tags.length);
-        //console.log(stemmedTokensMap.constructor);
-        let validTags=[];
-        for (let tag of tags) {
-            if (stemmedTokensMap[tag] == "1") {
-                validTags.push(tag);
-            } 
-        }
-        for(let validTag of validTags){
-            let cooccurMap=cooccur[validTag];
-            if(!cooccurMap){
-                cooccurMap={};
-                cooccur[validTag]=cooccurMap;
-            }
-            for(let validTag2 of validTags){
-                if(!cooccurMap[validTag2]){
-                    cooccurMap[validTag2]=1;
-                }else{
-                    cooccurMap[validTag2]=cooccurMap[validTag2]+1;
-                }
-            }
-        }
-    }
+    
     for (let question of questions) {
         console.log(question.title + ":" + index);
         let record = [index];
@@ -205,9 +238,12 @@ function convert2CSV() {
             stemmedTokensMap[stemmedToken] = "1";
         }
         for (let stemmedToken of stemmedTokens) {
-            if(cooccur[stemmedToken]){
-                for(let cooccurTag in cooccur[stemmedToken]){
-                    stemmedTokensMap[cooccurTag]=cooccur[stemmedToken][cooccurTag]/cooccur[stemmedToken][stemmedToken];
+            if (cooccur[stemmedToken]) {
+                for (let cooccurTag in cooccur[stemmedToken]) {
+                    let ratio=cooccur[stemmedToken][cooccurTag] / cooccur[stemmedToken][stemmedToken];
+                    if(ratio<1){
+                        stemmedTokensMap[cooccurTag] = cooccur[stemmedToken][cooccurTag] / cooccur[stemmedToken][stemmedToken];
+                    }
                 }
             }
         }
@@ -215,9 +251,9 @@ function convert2CSV() {
             if (stemmedTokensMap[tag] == "1") {
                 record.push(1);
             } else {
-                if(!stemmedTokensMap[tag]){
+                if (!stemmedTokensMap[tag]) {
                     record.push(0);
-                }else{
+                } else {
                     record.push(stemmedTokensMap[tag]);
                 }
             }
@@ -269,6 +305,6 @@ function convert2CSV() {
 //main();
 //collectTags();
 //processTags();
-//console.log(natural.PorterStemmer.stem("javascript"));
+//constructCooccurMap();
 convert2CSV();
 
