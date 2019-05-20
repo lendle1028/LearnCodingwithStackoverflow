@@ -3,6 +3,7 @@ const fs = require('fs');
 const natural = require('natural');
 const tokenizer = new natural.WordTokenizer();
 const mathjs = require('mathjs');
+const { Parser } = require('json2csv');
 
 function collectTagForClusters() {
     let json = fs.readFileSync("javascript_questions.json");
@@ -49,10 +50,6 @@ function collectTagForClusters() {
                                 measure: measure
                             });
                         }
-                        /*let score=allTokens[token];
-                        if(measure>score){
-                            allTokens[token]=measure;
-                        }*/
                     });
                 }
             }
@@ -83,10 +80,10 @@ function collectTagForClusters() {
                     }
                     if (tag.measure <= mean - sd) {
                         //generalTags[tag.name.toLowerCase()] = i;
-                        generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()]=i;
+                        generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()] = i;
                     }
                     count++;
-                    if (count >= 2) {
+                    if (count >= 1) {
                         //limit to 3 tags for each document
                         break;
                     }
@@ -103,33 +100,81 @@ function collectTagForClusters() {
     });
 }
 
-function inferOntology(){
-    let clusters=JSON.parse(fs.readFileSync("generalTags_javascript.json"));
-    let exists=[];
-    let queryingTag="function";
-    for(let cluster of clusters){
-        let tags=cluster.tags;
-        for(let tag in tags){
-            if(tag==queryingTag){
-                exists.push(cluster);
+function inferOntology(xOverYThreshold = 0.6, yOverXThreshold = 0.9, outputCSV = false) {
+    let clusters = JSON.parse(fs.readFileSync("generalTags_javascript.json"));
+    let allTags = [];
+    for (let cluster of clusters) {
+        let tags = cluster.tags;
+        for (let tag in tags) {
+            if (allTags.includes(tag) == false) {
+                allTags.push(tag);
             }
         }
     }
-    let candidateMap={};
-    for(let cluster of exists){
-        for(let tag in cluster.tags){
-            if(!candidateMap[tag]){
-                candidateMap[tag]=1;
-            }else{
-                candidateMap[tag]=candidateMap[tag]+1;
+    let data = [];
+    let dataAsMap={};
+    for (let tag of allTags) {
+        console.log(tag);
+        let row = {};
+        data.push(row);
+        row[" "] = tag;
+        dataAsMap[tag]=row;
+
+        for (let tag of allTags) {
+            row[tag] = 0;
+        }
+
+        let exists = [];
+        let queryingTag = tag;
+        for (let cluster of clusters) {
+            let tags = cluster.tags;
+            for (let tag in tags) {
+                if (tag == queryingTag) {
+                    exists.push(cluster);
+                }
+            }
+        }
+        let candidateMap = {};
+        for (let cluster of exists) {
+            for (let tag in cluster.tags) {
+                if (!candidateMap[tag]) {
+                    candidateMap[tag] = 1;
+                } else {
+                    candidateMap[tag] = candidateMap[tag] + 1;
+                }
+            }
+        }
+        for (let _tag in candidateMap) {
+            let value = (candidateMap[_tag] / exists.length);
+            row[_tag] = value;
+            if (value > 0.5 && tag != _tag) {
+                console.log("\t" + _tag + ":" + (candidateMap[_tag] / exists.length));
+            }
+        }
+        if (outputCSV) {
+            let fields = [" ", ...allTags];
+            const opts = { fields };
+            const parser = new Parser(opts);
+            const csv = parser.parse(data);
+            //console.log(csv);
+            fs.writeFileSync("knowledgeMap_javascript.csv", csv);
+        }
+    }
+    for (let y of allTags) {
+        for (let x of allTags) {
+            if(x!=y){
+                if(dataAsMap[y][x]>=xOverYThreshold){
+                    if(dataAsMap[x][y]<yOverXThreshold){
+                        console.log(x+" subsumes "+y);
+                    }else{
+                        console.log(x+" = "+y);
+                    }
+                }
             }
         }
     }
-    for(let tag in candidateMap){
-        console.log(tag+":"+(candidateMap[tag]/exists.length));
-    }
-    console.log(exists);
+    //console.log(dataAsMap);
 }
 
-collectTagForClusters();
-//inferOntology();
+//collectTagForClusters();
+inferOntology(0.9, 0.9, false);
