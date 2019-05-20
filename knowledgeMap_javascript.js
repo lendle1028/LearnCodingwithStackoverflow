@@ -130,5 +130,5 @@ function inferOntology(){
     console.log(exists);
 }
 
-//collectTagForClusters();
-inferOntology();
+collectTagForClusters();
+//inferOntology();
