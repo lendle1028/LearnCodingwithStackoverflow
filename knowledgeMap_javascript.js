@@ -82,7 +82,8 @@ function collectTagForClusters() {
                         continue;
                     }
                     if (tag.measure <= mean - sd) {
-                        generalTags[tag.name.toLowerCase()] = i;
+                        //generalTags[tag.name.toLowerCase()] = i;
+                        generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()]=i;
                     }
                     count++;
                     if (count >= 2) {
