@@ -217,5 +217,5 @@ function outputTree(parentChildMap) {
     //console.log(tempMap["javascript"]);
 }
 //collectTagForClusters();
-let parentChildMap = inferOntology(0.6, 1, false);
+let parentChildMap = inferOntology(0.5, 1, false);
 outputTree(parentChildMap);
