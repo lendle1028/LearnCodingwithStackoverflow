@@ -80,19 +80,34 @@ function collectTagForClusters() {
                     }
                     if (tag.measure <= mean - sd) {
                         //generalTags[tag.name.toLowerCase()] = i;
-                        generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()] = i;
+                        //generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()] = i;
+                        generalTags[natural.PorterStemmer.stem(tag.name).toLowerCase()] = tag.measure;
                     }
                     count++;
-                    if (count >= 1) {
+                    if (count >= 3) {
                         //limit to 3 tags for each document
                         break;
                     }
                 }
             }
+            let orderedGeneralTags=[];
+            for(let i in generalTags){
+                orderedGeneralTags.push({
+                    tag: i,
+                    measure: generalTags[i]
+                });
+            }
+            orderedGeneralTags.sort(function(o1, o2){
+                return o1.measure-o2.measure;
+            });
+            let moreCommonGeneralTags={};
+            for(let i=0; i<5 && i<orderedGeneralTags.length; i++){
+                moreCommonGeneralTags[orderedGeneralTags[i].tag]=orderedGeneralTags[i].measure;
+            }
             //console.log(generalTags);
             results.push({
                 cluster: cluster,
-                tags: generalTags
+                tags: moreCommonGeneralTags
             });
             //console.log(json);
         }
@@ -177,4 +192,4 @@ function inferOntology(xOverYThreshold = 0.6, yOverXThreshold = 0.9, outputCSV =
 }
 
 //collectTagForClusters();
-inferOntology(0.9, 0.9, false);
+inferOntology(0.9, 0.9, true);
