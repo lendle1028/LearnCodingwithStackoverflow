@@ -90,19 +90,19 @@ function collectTagForClusters() {
                     }
                 }
             }
-            let orderedGeneralTags=[];
-            for(let i in generalTags){
+            let orderedGeneralTags = [];
+            for (let i in generalTags) {
                 orderedGeneralTags.push({
                     tag: i,
                     measure: generalTags[i]
                 });
             }
-            orderedGeneralTags.sort(function(o1, o2){
-                return o1.measure-o2.measure;
+            orderedGeneralTags.sort(function (o1, o2) {
+                return o1.measure - o2.measure;
             });
-            let moreCommonGeneralTags={};
-            for(let i=0; i<5 && i<orderedGeneralTags.length; i++){
-                moreCommonGeneralTags[orderedGeneralTags[i].tag]=orderedGeneralTags[i].measure;
+            let moreCommonGeneralTags = {};
+            for (let i = 0; i < 5 && i < orderedGeneralTags.length; i++) {
+                moreCommonGeneralTags[orderedGeneralTags[i].tag] = orderedGeneralTags[i].measure;
             }
             //console.log(generalTags);
             results.push({
@@ -127,13 +127,13 @@ function inferOntology(xOverYThreshold = 0.6, yOverXThreshold = 0.9, outputCSV =
         }
     }
     let data = [];
-    let dataAsMap={};
+    let dataAsMap = {};
     for (let tag of allTags) {
         console.log(tag);
         let row = {};
         data.push(row);
         row[" "] = tag;
-        dataAsMap[tag]=row;
+        dataAsMap[tag] = row;
 
         for (let tag of allTags) {
             row[tag] = 0;
@@ -162,9 +162,9 @@ function inferOntology(xOverYThreshold = 0.6, yOverXThreshold = 0.9, outputCSV =
         for (let _tag in candidateMap) {
             let value = (candidateMap[_tag] / exists.length);
             row[_tag] = value;
-            if (value > 0.5 && tag != _tag) {
-                console.log("\t" + _tag + ":" + (candidateMap[_tag] / exists.length));
-            }
+            // if (value > 0.5 && tag != _tag) {
+            //     console.log("\t" + _tag + ":" + (candidateMap[_tag] / exists.length));
+            // }
         }
         if (outputCSV) {
             let fields = [" ", ...allTags];
@@ -175,21 +175,47 @@ function inferOntology(xOverYThreshold = 0.6, yOverXThreshold = 0.9, outputCSV =
             fs.writeFileSync("knowledgeMap_javascript.csv", csv);
         }
     }
+    let parentChildMap = {};//child->parent tag
+    for (let tag of allTags) {
+        parentChildMap[tag] = "javascript";//the default root
+    }
     for (let y of allTags) {
         for (let x of allTags) {
-            if(x!=y){
-                if(dataAsMap[y][x]>=xOverYThreshold){
-                    if(dataAsMap[x][y]<yOverXThreshold){
-                        console.log(x+" subsumes "+y);
-                    }else{
-                        console.log(x+" = "+y);
+            if (x != y) {
+                if (dataAsMap[y][x] >= xOverYThreshold) {
+                    if (dataAsMap[x][y] < yOverXThreshold) {
+                        //console.log(x+" subsumes "+y);
+                        parentChildMap[y] = x;
+                    } else {
+                        delete parentChildMap[y];
+                        //console.log(y+" = "+x+":"+parentChildMap[y]+":"+parentChildMap[x]);
                     }
                 }
             }
         }
     }
     //console.log(dataAsMap);
+    console.log(parentChildMap);
+    return parentChildMap;
 }
 
+function outputTree(parentChildMap) {
+    let tempMap = {};
+    for (let i in parentChildMap) {
+        let child = i;
+        let parent = parentChildMap[child];
+        if (!tempMap[parent]) {
+            tempMap[parent] = {};
+        }
+
+        let childNode = {};
+        tempMap[parent][child] = childNode;
+        tempMap[child] = childNode;
+    }
+    const treeify = require('treeify');
+    console.log(treeify.asTree(tempMap["javascript"]));
+    //console.log(tempMap["javascript"]);
+}
 //collectTagForClusters();
-inferOntology(0.9, 0.9, true);
+let parentChildMap = inferOntology(0.6, 1, false);
+outputTree(parentChildMap);
