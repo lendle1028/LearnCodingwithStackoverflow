@@ -98,4 +98,4 @@ function extractTagsFromTitle() {
     fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
 }
 
-module.exports={collectArticles, extractTags};
+module.exports={collectArticles, extractTagsFromTitle};
