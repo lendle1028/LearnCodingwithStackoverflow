@@ -16,7 +16,7 @@ function sleep(ms) {
     });*/
 }
 
-async function main() {
+async function collectArticles() {
     let results = [];
     try {
         for (let page = 1; page <= 500; page++) {
@@ -302,7 +302,7 @@ function convert2CSV() {
     // fs.writeFileSync("questions.csv", csv);
     console.log(cooccur);
 }
-//main();
+//collectArticles();
 //collectTags();
 //processTags();
 //constructCooccurMap();
