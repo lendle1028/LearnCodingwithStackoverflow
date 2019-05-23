@@ -1,5 +1,5 @@
-const fs=require('fs');
-const {sleep}=require('./Common');
+const fs = require('fs');
+const { sleep } = require('./Common');
 const natural = require('natural');
 const TfIdf = natural.TfIdf;
 const tfidf = new TfIdf();
@@ -46,7 +46,7 @@ async function collectArticles() {
 /**
  * extract tags from article
  * calculate tfidf and keep only tags with
- * measure>0 and being referenced at least 50 times
+ * measure>0 
  * 
  * store in tags.json
  * rely on javascript_questions.json
@@ -60,7 +60,7 @@ function extractTags() {
     for (let item of items) {
         let title = item.title;
         tfidf.addDocument(title);
-        let _tokens=item.tags;
+        let _tokens = item.tags;
         console.log(title);
         for (let token of _tokens) {
             if (!tokens[token]) {
@@ -72,8 +72,7 @@ function extractTags() {
 
     let processedCount = 0;
     for (let token in tokens) {
-        processedCount++;
-        console.log("processing token: " + token + " " + processedCount + "/" + totalTokenCount);
+
         tfidf.tfidfs(token, function (i, measure) {
             if (measure > 0) {
                 let tag = token;
@@ -84,18 +83,24 @@ function extractTags() {
                 }
             }
             //console.log('document #' + i + ' is ' + measure);
+            if (i == items.length - 1) {
+                processedCount++;
+                console.log("processing token: " + token + " " + processedCount + "/" + totalTokenCount);
+                if (processedCount == totalTokenCount) {
+                    //then keep going
+                    let filteredTagMap = {};
+
+                    for (let tag in tagMap) {
+                        if (tagMap[tag] >= 1) {
+                            filteredTagMap[tag] = tagMap[tag];
+                        }
+                    }
+                    console.log(filteredTagMap);
+                    fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
+                }
+            }
         });
     }
-
-    let filteredTagMap = {};
-
-    for (let tag in tagMap) {
-        if (tagMap[tag] >= 50) {
-            filteredTagMap[tag] = tagMap[tag];
-        }
-    }
-    console.log(filteredTagMap);
-    fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
 }
 
-module.exports={collectArticles, extractTags};
+module.exports = { collectArticles, extractTags };

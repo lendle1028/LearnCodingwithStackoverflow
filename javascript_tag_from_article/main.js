@@ -4,9 +4,9 @@ const { collectTagForClusters, inferOntology, outputTree } = require('./Knowledg
 
 async function preProcessing() {
     //await collectArticles();
-    extractTags();
-    // stemAndFilterTags();
-    // await constructCooccurMap();
+    //extractTags();
+    //stemAndFilterTags();
+    await constructCooccurMap();
     // constructArticle2TagCSV();
 };
 

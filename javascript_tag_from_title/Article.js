@@ -72,8 +72,7 @@ function extractTagsFromTitle() {
 
     let processedCount = 0;
     for (let token in tokens) {
-        processedCount++;
-        console.log("processing token: " + token + " " + processedCount + "/" + totalTokenCount);
+
         tfidf.tfidfs(token, function (i, measure) {
             if (measure > 0) {
                 let tag = token;
@@ -84,6 +83,22 @@ function extractTagsFromTitle() {
                 }
             }
             //console.log('document #' + i + ' is ' + measure);
+            if (i == items.length - 1) {
+                processedCount++;
+                console.log("processing token: " + token + " " + processedCount + "/" + totalTokenCount);
+                if (processedCount == totalTokenCount) {
+                    //then keep going
+                    let filteredTagMap = {};
+
+                    for (let tag in tagMap) {
+                        if (tagMap[tag] >= 1) {
+                            filteredTagMap[tag] = tagMap[tag];
+                        }
+                    }
+                    console.log(filteredTagMap);
+                    fs.writeFileSync("tags.json", JSON.stringify(filteredTagMap));
+                }
+            }
         });
     }
 

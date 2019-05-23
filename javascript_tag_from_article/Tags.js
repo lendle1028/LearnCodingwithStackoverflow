@@ -52,9 +52,9 @@ function stemAndFilterTags() {
     let mean = mathjs.mean(counts);
     let filteredTokens = [];
     for (let tag of sortedTagArray) {
-        if (filteredTokens.length >= 100) {
+        /*if (filteredTokens.length >= 1000) {
             break;
-        }
+        }*/
         if (!isNaN(tag.count) && tag.count >= mean) {
             filteredTokens.push(tag);
         }
